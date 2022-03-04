@@ -1,0 +1,22 @@
+Vagrant.configure("2") do |config|
+    # Vm
+    # Import la box de base "debian/buster64"
+    config.vm.box = "debian/buster64"
+    # Synchronise le fichier courant du host avec le répertoire /vagrant de la VM.
+    config.vm.synced_folder ".", "/vagrant"
+
+    # Provider
+    # Exécute la configuration pour le provider
+    config.vm.provider :virtualbox do |vb|
+        # vb.gui = true
+        # Paramètre le nom de la vm virtualbox
+        vb.name = "m340-vagrant-exemple"
+    end
+
+    # Provision
+    # Exécute le script boostrap.sh
+    config.vm.provision :shell, path: "bootstrap.sh"
+    # Network
+    # Configure une redirection de port
+    config.vm.network "forwarded_port", guest: 80, host: 8080, id: "Nginx"
+end

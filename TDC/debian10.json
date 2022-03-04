@@ -1,0 +1,68 @@
+{
+    "builders": [
+      {
+        "boot_command": [
+          "<esc> <wait>",
+          "auto url=http://{{ .HTTPIP }}:{{ .HTTPPort }}/buster-preseed.cfg <wait>",
+          "hostname={{user `VM_NAME`}} ",
+          "<enter><wait>"
+        ],
+        "boot_wait": "10s",
+        "disk_size": "{{ user `VM_DISK_SIZE` }}",
+        "guest_additions_path": "VBoxGuestAdditions_{{.Version}}.iso",
+        "guest_os_type": "{{ user `VM_TYPE` }}",
+        "headless": true,
+        "http_directory": "http",
+        "iso_checksum": "sha256:{{ user `ISO_SUM` }}",
+        "iso_url": "{{ user `ISO_URL` }}",
+        "output_directory": "output-{{ user `VM_NAME` }}-{{isotime \"2006-01-02\"}}",
+        "shutdown_command": "echo '/sbin/halt -h -p' > shutdown.sh; echo 'vagrant'|sudo -S bash 'shutdown.sh'",
+        "ssh_port": 22,
+        "ssh_timeout": "10000s",
+        "ssh_username": "vagrant",
+        "ssh_password": "vagrant",
+        "type": "virtualbox-iso",
+        "vboxmanage": [
+          ["modifyvm", "{{.Name}}", "--memory", "2048"],
+          ["modifyvm", "{{.Name}}", "--cpus", "2"]
+        ],
+        "virtualbox_version_file": ".vbox_version"
+      }
+    ],
+    "post-processors": [
+      [
+        {
+          "compression_level": 9,
+          "output": "builds/{{.Provider}}/{{ user `VM_NAME` }}-{{isotime \"2006-01-02\"}}.box",
+          "type": "vagrant"
+        }
+      ]
+    ],
+    "provisioners": [
+      {
+        "override": {
+          "virtualbox-iso": {
+            "execute_command": "echo 'vagrant'|sudo -S bash '{{.Path}}' '{{ user `VBOX_VERSION` }}' '{{ user `VM_TYPE` }}' "
+          }
+        },
+        "scripts": [
+          "scripts/base.sh",
+          "scripts/virtualbox.sh",
+          "scripts/vagrant.sh",
+          "scripts/dep.sh",
+          "scripts/cleanup.sh",
+          "scripts/zerodisk.sh",
+          "scripts/nginx.sh"
+        ],
+        "type": "shell"
+      }
+    ],
+    "variables": {
+      "ISO_SUM": "396553f005ad9f86a51e246b1540c60cef676f9c71b95e22b753faef59f89bee",
+      "ISO_URL": "http://cdimage.debian.org/cdimage/release/10.8.0/amd64/iso-cd/debian-10.8.0-amd64-netinst.iso",
+      "VBOX_VERSION": "6.0.14",
+      "VM_DISK_SIZE": "10240",
+      "VM_NAME": "debian10",
+      "VM_TYPE": "Debian_64"
+    }
+  }

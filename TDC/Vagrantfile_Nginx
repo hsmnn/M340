@@ -1,0 +1,33 @@
+Vagrant.configure("2") do |config|
+
+    config.vm.box = "debian/buster64"
+    config.vm.synced_folder ".", "/vagrant"
+
+    #dns resolving name issue solution
+    config.vm.provider :virtualbox do |vb|
+        vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+    end
+
+    (1..2).each do |i|
+        config.vm.define "m340-nginx-#{i}" do |node|
+            node.vm.hostname = "backend#{i}"
+            node.vm.provision :shell, path: "bootstrap.sh"
+            node.vm.network "private_network", ip: "192.168.2.#{i}"
+            node.vm.network "forwarded_port", guest: 80, host: 8080, disabled: true
+            node.vm.provider :virtualbox do |vb|
+                vb.name = "m340-nginx-#{i}"
+            end
+        end
+    end
+
+    config.vm.define "m340-nginx-frontend" do |frontend|
+        frontend.vm.hostname = "frontend"
+        frontend.vm.provision :shell, path: "frontend.sh"
+        frontend.vm.network "forwarded_port", guest: 80, host: 8080, id: "proxy"
+        frontend.vm.network "private_network", ip: "192.168.2.3"
+        frontend.vm.network "public_network"
+        frontend.vm.provider :virtualbox do |vb|
+            vb.name = "m340-nginx-frontend"
+        end
+    end
+end
